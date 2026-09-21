@@ -50,16 +50,26 @@ export function drawMark(
   }
 }
 
-export function renderSvg(
-  qr: QrCodeGenerateResult,
-  opts: RenderOptions,
-): string {
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+export function renderSvg(qr: QrCodeGenerateResult, opts: RenderOptions): string {
   const px = opts.modulePx;
   const dim = qr.size * px;
   const radius = opts.shape === "soft" ? Math.max(1, px * 0.28) : 0;
+
+  const bg = escapeHtml(opts.bg);
+  const fg = escapeHtml(opts.fg);
+
   const parts: string[] = [
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${dim} ${dim}" width="${dim}" height="${dim}" shape-rendering="crispEdges">`,
-    `<rect width="${dim}" height="${dim}" fill="${opts.bg}"/>`,
+    `<rect width="${dim}" height="${dim}" fill="${bg}"/>`,
   ];
   for (let y = 0; y < qr.size; y++) {
     for (let x = 0; x < qr.size; x++) {
@@ -71,12 +81,10 @@ export function renderSvg(
         type === QrCodeDataType.Alignment ||
         radius === 0;
       if (square) {
-        parts.push(
-          `<rect x="${x * px}" y="${y * px}" width="${px}" height="${px}" fill="${opts.fg}"/>`,
-        );
+        parts.push(`<rect x="${x * px}" y="${y * px}" width="${px}" height="${px}" fill="${fg}"/>`);
       } else {
         parts.push(
-          `<rect x="${x * px}" y="${y * px}" width="${px}" height="${px}" rx="${radius}" ry="${radius}" fill="${opts.fg}"/>`,
+          `<rect x="${x * px}" y="${y * px}" width="${px}" height="${px}" rx="${radius}" ry="${radius}" fill="${fg}"/>`,
         );
       }
     }
