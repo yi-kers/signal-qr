@@ -4,6 +4,14 @@ function escapeWifi(value: string): string {
   return value.replace(/([\\;,:"])/g, "\\$1");
 }
 
+function escapeVCard(value: string): string {
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/,/g, "\\,")
+    .replace(/;/g, "\\;")
+    .replace(/\n/g, "\\n");
+}
+
 export function buildPayload(kind: PayloadKind, fields: PayloadFields): string {
   switch (kind) {
     case "url":
@@ -12,27 +20,21 @@ export function buildPayload(kind: PayloadKind, fields: PayloadFields): string {
       return fields.text;
     case "wifi": {
       const ssid = escapeWifi(fields.wifiSsid.trim());
-      const pass =
-        fields.wifiAuth === "nopass" ? "" : escapeWifi(fields.wifiPass);
+      const pass = fields.wifiAuth === "nopass" ? "" : escapeWifi(fields.wifiPass);
       const hidden = fields.wifiHidden ? "true" : "false";
       return `WIFI:T:${fields.wifiAuth};S:${ssid};P:${pass};H:${hidden};;`;
     }
     case "vcard": {
-      const name = fields.cardName.trim();
+      const name = escapeVCard(fields.cardName.trim());
       const parts = name.split(/\s+/);
-      const last = parts.length > 1 ? parts.at(-1) ?? "" : "";
+      const last = parts.length > 1 ? (parts.at(-1) ?? "") : "";
       const first = parts.length > 1 ? parts.slice(0, -1).join(" ") : name;
-      const lines = [
-        "BEGIN:VCARD",
-        "VERSION:3.0",
-        `N:${last};${first};;;`,
-        `FN:${name}`,
-      ];
-      if (fields.cardOrg.trim()) lines.push(`ORG:${fields.cardOrg.trim()}`);
+      const lines = ["BEGIN:VCARD", "VERSION:3.0", `N:${last};${first};;;`, `FN:${name}`];
+      if (fields.cardOrg.trim()) lines.push(`ORG:${escapeVCard(fields.cardOrg.trim())}`);
       if (fields.cardPhone.trim())
-        lines.push(`TEL;TYPE=CELL:${fields.cardPhone.trim()}`);
-      if (fields.cardEmail.trim()) lines.push(`EMAIL:${fields.cardEmail.trim()}`);
-      if (fields.cardUrl.trim()) lines.push(`URL:${fields.cardUrl.trim()}`);
+        lines.push(`TEL;TYPE=CELL:${escapeVCard(fields.cardPhone.trim())}`);
+      if (fields.cardEmail.trim()) lines.push(`EMAIL:${escapeVCard(fields.cardEmail.trim())}`);
+      if (fields.cardUrl.trim()) lines.push(`URL:${escapeVCard(fields.cardUrl.trim())}`);
       lines.push("END:VCARD");
       return lines.join("\n");
     }
