@@ -9,6 +9,7 @@ function escapeVCard(value: string): string {
     .replace(/\\/g, "\\\\")
     .replace(/,/g, "\\,")
     .replace(/;/g, "\\;")
+    .replace(/\r/g, "\\r")
     .replace(/\n/g, "\\n");
 }
 
